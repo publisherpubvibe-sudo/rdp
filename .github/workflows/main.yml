@@ -14,7 +14,7 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           
-          # Admin User Password Setup
+          # Admin Password Setup
           $AdminUser = [adsi]"WinNT://./runneradmin,user"
           $AdminUser.SetPassword("P@ssword12345")
           $AdminUser.SetInfo()
@@ -24,12 +24,9 @@ jobs:
         env:
           TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
         run: |
-          # Install Tailscale via Chocolatey
           choco install tailscale -y
-          
-          # Start Tailscale Service & Authenticate
           $env:Path += ";C:\Program Files\Tailscale"
-          tailscale up --authkey=$env:TAILSCALE_AUTHKEY --unapproved
+          tailscale up --auth-key=$env:TAILSCALE_AUTHKEY --unattended --accept-risk=all
 
       - name: Display Connection Info
         shell: powershell
