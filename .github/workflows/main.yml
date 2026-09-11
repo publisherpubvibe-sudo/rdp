@@ -14,22 +14,27 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           
-          # Admin User Password
+          # Admin User Password Setup
           $AdminUser = [adsi]"WinNT://./runneradmin,user"
           $AdminUser.SetPassword("P@ssword12345")
           $AdminUser.SetInfo()
 
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v2
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          version: 1.70.0
+      - name: Install and Connect Tailscale
+        shell: powershell
+        env:
+          TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
+        run: |
+          # Install Tailscale via Chocolatey
+          choco install tailscale -y
+          
+          # Start Tailscale Service & Authenticate
+          $env:Path += ";C:\Program Files\Tailscale"
+          tailscale up --authkey=$env:TAILSCALE_AUTHKEY --unapproved
 
       - name: Display Connection Info
         shell: powershell
         run: |
+          $env:Path += ";C:\Program Files\Tailscale"
           Start-Sleep -Seconds 5
           $ip = (tailscale ip -4)
           Write-Host "==========================================" -ForegroundColor Green
